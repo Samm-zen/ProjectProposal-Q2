@@ -1,85 +1,180 @@
-def get_float_input(prompt):
-    while True:
-        try:
-            return float(input(prompt))
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
+import tkinter as tk
+from tkinter import messagebox
+
+# Store expenses
+expenses = []
+
+# ---------- FUNCTIONS ----------
+
+def add_expense():
+    try:
+        name = name_entry.get()
+        category = category_entry.get()
+        price = float(price_entry.get())
+
+        if name == "" or category == "":
+            messagebox.showerror("Error", "Please fill in all fields")
+            return
+
+        if price < 0:
+            messagebox.showerror("Error", "Price cannot be negative")
+            return
+
+        expense = {
+            "name": name,
+            "category": category,
+            "price": price
+        }
+
+        expenses.append(expense)
+
+        history_list.insert(tk.END, f"{name} ({category}) - ₱{price}")
+
+        name_entry.delete(0, tk.END)
+        category_entry.delete(0, tk.END)
+        price_entry.delete(0, tk.END)
+
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid number for price")
 
 
-def add_expense(expenses, total_spent):
-    print("\n--- Add an Expense ---")
-    name = input("Expense name: ")
-    category = input("Category (Food/Transport/School/Others): ")
-    price = get_float_input("Price: ₱")
+def show_summary():
+    try:
+        balance = float(balance_entry.get())
+        goal = float(goal_entry.get())
+    except ValueError:
+        messagebox.showerror("Error", "Enter valid numbers for balance and goal")
+        return
 
-    expenses.append({
-        "name": name,
-        "category": category,
-        "price": price
-    })
+    total_spent = sum(expense["price"] for expense in expenses)
+    remaining = balance - total_spent
 
-    total_spent += price
-    return total_spent
+    summary = "\nExpense Summary\n\n"
 
+    if not expenses:
+        summary += "No expenses recorded.\n"
+    else:
+        for i, expense in enumerate(expenses, start=1):
+            summary += f"{i}. {expense['name']} ({expense['category']}) - ₱{expense['price']}\n"
 
-def show_summary(expenses, bank_balance, total_spent, savings_goal):
-    remaining = bank_balance - total_spent
+    summary += "\n----------------------"
+    summary += f"\nTotal Spent: ₱{total_spent}"
+    summary += f"\nRemaining Balance: ₱{remaining}"
+    summary += "\n----------------------"
 
-    print("\n============================")
-    print("          SUMMARY")
-    print("============================")
-
-    for idx, expense in enumerate(expenses, start=1):
-        print(f"{idx}. {expense['name']} "
-              f"({expense['category']}) - ₱{expense['price']}")
-
-    print("----------------------------")
-    print(f"Total spent: ₱{total_spent}")
-    print(f"Remaining balance: ₱{remaining}")
-    print("----------------------------")
-
-    if savings_goal:
-        print(f"Savings Goal: ₱{savings_goal}")
-        if remaining >= savings_goal:
-            print("You reached your savings goal!")
+    if goal > 0:
+        summary += f"\nSavings Goal: ₱{goal}"
+        if remaining >= goal:
+            summary += "\nYou reached your savings goal!"
         else:
-            print("You have not yet reached your savings goal.")
+            summary += "\nYou have not reached your savings goal yet."
 
     if remaining < 0:
-        print("You are in debt. Reduce expenses.")
+        summary += "\nWARNING: You exceeded your balance!"
     elif remaining <= 100:
-        print("Balance is very low.")
+        summary += "\nBalance is very low."
     else:
-        print("Spending is manageable.")
+        summary += "\nSpending is manageable."
+
+    messagebox.showinfo("Summary", summary)
 
 
-def main():
-    while True:
-        expenses = []
-        total_spent = 0
-
-        print("\n====== Expense Tracker ======")
-        bank_balance = get_float_input("Enter your total bank balance: ₱")
-        savings_goal = get_float_input("Enter your savings goal (₱0 if none): ")
-
-        while True:
-            total_spent = add_expense(expenses, total_spent)
-
-            if total_spent > bank_balance:
-                print("WARNING: You exceeded your balance!")
-                break
-
-            add_more = input("Add another expense? (yes/no): ").lower()
-            if add_more != "yes":
-                break
-
-        show_summary(expenses, bank_balance, total_spent, savings_goal)
-
-        restart = input("\nRestart program? (yes/no): ").lower()
-        if restart != "yes":
-            print("Goodbye!")
-            break
+def clear_history():
+    history_list.delete(0, tk.END)
+    expenses.clear()
 
 
-if __name__ == "__main__":
-    main()
+# ---------- WINDOW ----------
+
+root = tk.Tk()
+root.title("Expense Tracker")
+root.geometry("480x600")
+root.configure(bg="#0f172a")
+
+# ---------- TITLE ----------
+
+title = tk.Label(
+    root,
+    text="Expense Tracker",
+    font=("Segoe UI", 22, "bold"),
+    bg="#0f172a",
+    fg="white"
+)
+title.pack(pady=15)
+
+# ---------- BALANCE INPUT ----------
+
+tk.Label(root, text="Bank Balance", bg="#0f172a", fg="white").pack()
+balance_entry = tk.Entry(root, font=("Segoe UI", 11))
+balance_entry.pack(pady=5)
+
+tk.Label(root, text="Savings Goal", bg="#0f172a", fg="white").pack()
+goal_entry = tk.Entry(root, font=("Segoe UI", 11))
+goal_entry.pack(pady=5)
+
+# ---------- EXPENSE INPUT ----------
+
+tk.Label(root, text="Expense Name", bg="#0f172a", fg="white").pack(pady=5)
+name_entry = tk.Entry(root, font=("Segoe UI", 11))
+name_entry.pack()
+
+tk.Label(root, text="Category", bg="#0f172a", fg="white").pack(pady=5)
+category_entry = tk.Entry(root, font=("Segoe UI", 11))
+category_entry.pack()
+
+tk.Label(root, text="Price", bg="#0f172a", fg="white").pack(pady=5)
+price_entry = tk.Entry(root, font=("Segoe UI", 11))
+price_entry.pack()
+
+# ---------- BUTTONS ----------
+
+add_btn = tk.Button(
+    root,
+    text="Add Expense",
+    command=add_expense,
+    bg="#22c55e",
+    fg="white",
+    font=("Segoe UI", 11),
+    width=20
+)
+add_btn.pack(pady=10)
+
+summary_btn = tk.Button(
+    root,
+    text="View Summary",
+    command=show_summary,
+    bg="#3b82f6",
+    fg="white",
+    font=("Segoe UI", 11),
+    width=20
+)
+summary_btn.pack(pady=5)
+
+clear_btn = tk.Button(
+    root,
+    text="Clear History",
+    command=clear_history,
+    bg="#ef4444",
+    fg="white",
+    font=("Segoe UI", 11),
+    width=20
+)
+clear_btn.pack(pady=5)
+
+# ---------- HISTORY SECTION ----------
+
+history_title = tk.Label(
+    root,
+    text="Expense History",
+    font=("Segoe UI", 13, "bold"),
+    bg="#0f172a",
+    fg="white"
+)
+history_title.pack(pady=10)
+
+history_list = tk.Listbox(root, width=50, height=12)
+history_list.pack()
+
+# ---------- RUN PROGRAM ----------
+
+root.mainloop()
