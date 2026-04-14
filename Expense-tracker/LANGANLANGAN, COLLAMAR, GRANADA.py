@@ -8,8 +8,8 @@ expenses = []
 
 def add_expense():
     try:
-        name = name_entry.get()
-        category = category_entry.get()
+        name = name_entry.get().strip()
+        category = category_entry.get().strip()
         price = float(price_entry.get())
 
         if name == "" or category == "":
@@ -28,7 +28,7 @@ def add_expense():
 
         expenses.append(expense)
 
-        history_list.insert(tk.END, f"{name} ({category}) - ₱{price}")
+        history_list.insert(tk.END, f"{name} ({category}) - ₱{price:.2f}")
 
         name_entry.delete(0, tk.END)
         category_entry.delete(0, tk.END)
@@ -55,15 +55,15 @@ def show_summary():
         summary += "No expenses recorded.\n"
     else:
         for i, expense in enumerate(expenses, start=1):
-            summary += f"{i}. {expense['name']} ({expense['category']}) - ₱{expense['price']}\n"
+            summary += f"{i}. {expense['name']} ({expense['category']}) - ₱{expense['price']:.2f}\n"
 
     summary += "\n----------------------"
-    summary += f"\nTotal Spent: ₱{total_spent}"
-    summary += f"\nRemaining Balance: ₱{remaining}"
+    summary += f"\nTotal Spent: ₱{total_spent:.2f}"
+    summary += f"\nRemaining Balance: ₱{remaining:.2f}"
     summary += "\n----------------------"
 
     if goal > 0:
-        summary += f"\nSavings Goal: ₱{goal}"
+        summary += f"\nSavings Goal: ₱{goal:.2f}"
         if remaining >= goal:
             summary += "\nYou reached your savings goal!"
         else:
@@ -80,27 +80,33 @@ def show_summary():
 
 
 def clear_history():
-    history_list.delete(0, tk.END)
-    expenses.clear()
+    if not expenses:
+        messagebox.showinfo("Info", "No expenses to clear.")
+        return
+
+    confirm = messagebox.askyesno("Confirm", "Clear all expenses?")
+    if confirm:
+        history_list.delete(0, tk.END)
+        expenses.clear()
+        messagebox.showinfo("Cleared", "All expenses have been removed.")
 
 
 # ---------- WINDOW ----------
 
 root = tk.Tk()
-root.title("Expense Tracker")
-root.geometry("480x600")
+root.title("Spendify")
+root.geometry("500x650")
 root.configure(bg="#0f172a")
 
 # ---------- TITLE ----------
 
-title = tk.Label(
+tk.Label(
     root,
-    text="Expense Tracker",
+    text="Spendify",
     font=("Segoe UI", 22, "bold"),
     bg="#0f172a",
     fg="white"
-)
-title.pack(pady=15)
+).pack(pady=15)
 
 # ---------- BALANCE INPUT ----------
 
@@ -128,7 +134,7 @@ price_entry.pack()
 
 # ---------- BUTTONS ----------
 
-add_btn = tk.Button(
+tk.Button(
     root,
     text="Add Expense",
     command=add_expense,
@@ -136,10 +142,9 @@ add_btn = tk.Button(
     fg="white",
     font=("Segoe UI", 11),
     width=20
-)
-add_btn.pack(pady=10)
+).pack(pady=10)
 
-summary_btn = tk.Button(
+tk.Button(
     root,
     text="View Summary",
     command=show_summary,
@@ -147,10 +152,9 @@ summary_btn = tk.Button(
     fg="white",
     font=("Segoe UI", 11),
     width=20
-)
-summary_btn.pack(pady=5)
+).pack(pady=5)
 
-clear_btn = tk.Button(
+tk.Button(
     root,
     text="Clear History",
     command=clear_history,
@@ -158,22 +162,29 @@ clear_btn = tk.Button(
     fg="white",
     font=("Segoe UI", 11),
     width=20
-)
-clear_btn.pack(pady=5)
+).pack(pady=5)
 
 # ---------- HISTORY SECTION ----------
 
-history_title = tk.Label(
+tk.Label(
     root,
     text="Expense History",
     font=("Segoe UI", 13, "bold"),
     bg="#0f172a",
     fg="white"
-)
-history_title.pack(pady=10)
+).pack(pady=10)
 
-history_list = tk.Listbox(root, width=50, height=12)
+# Scrollable list
+frame = tk.Frame(root)
+frame.pack()
+
+scrollbar = tk.Scrollbar(frame)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+history_list = tk.Listbox(frame, width=50, height=12, yscrollcommand=scrollbar.set)
 history_list.pack()
+
+scrollbar.config(command=history_list.yview)
 
 # ---------- RUN PROGRAM ----------
 
